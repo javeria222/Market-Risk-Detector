@@ -14,14 +14,27 @@ client = None
 db = None
 listings_collection = None
 feedback_collection = None
+users_collection = None
 
 if uri:
     try:
-        # serverSelectionTimeoutMS=2000 ensures quick failure if DB is unreachable (e.g. offline/DNS/SSL issues)
         client = MongoClient(uri, server_api=ServerApi('1'), serverSelectionTimeoutMS=2000)
         db = client["market_risk_detector"]
         listings_collection = db["listings"]
         feedback_collection = db["feedback"]
+        users_collection = db["users"]
+        users_collection.create_index("email", unique=True)
     except Exception as e:
         logger.warning(f"MongoDB connection failed to initialize: {e}")
-        db = None
+        db = None
+
+
+def create_user(email: str, password_hash: str):
+    return users_collection.insert_one({
+        "email": email,
+        "password_hash": password_hash
+    })
+
+
+def find_user_by_email(email: str):
+    return users_collection.find_one({"email": email})

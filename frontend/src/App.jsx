@@ -1,16 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HomePage } from './pages/HomePage.jsx';
 import { SubmitPage } from './pages/SubmitPage.jsx';
 import { ResultPage } from './pages/ResultPage.jsx';
+import { LoginPage } from './pages/LoginPage.jsx';
+import { SignupPage } from './pages/SignupPage.jsx';
 import { submitListing } from './api/client.js';
 import { ShieldCheck, ArrowRight, Gauge, Hand } from 'lucide-react';
 
 export default function App() {
-  const [view, setView] = useState('home'); // 'home' | 'submit' | 'result' | 'how' | 'about'
+  const [view, setView] = useState('home'); // 'home' | 'submit' | 'result' | 'how' | 'about' | 'login' | 'signup'
   const [listing, setListing] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('auth_token'));
+  const [currentUser, setCurrentUser] = useState(() => {
+    const email = localStorage.getItem('auth_email');
+    return email ? { email } : null;
+  });
+
+  useEffect(() => {
+    if (authToken) {
+      localStorage.setItem('auth_token', authToken);
+    } else {
+      localStorage.removeItem('auth_token');
+    }
+  }, [authToken]);
+
+  const handleAuthSuccess = (data) => {
+    setAuthToken(data.token);
+    setCurrentUser({ email: data.email });
+    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('auth_email', data.email);
+    navTo('home');
+  };
+
+  const handleLogout = () => {
+    setAuthToken(null);
+    setCurrentUser(null);
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_email');
+    navTo('home');
+  };
 
   const handleSubmitListing = async (formData) => {
     setLoading(true);
@@ -91,12 +123,35 @@ export default function App() {
             </button>
           </nav>
 
-          <button
-            onClick={() => navTo('submit')}
-            className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-all flex items-center gap-1.5"
-          >
-            Start Checking <ArrowRight size={14} />
-          </button>
+          <div className="flex items-center gap-3">
+            {currentUser ? (
+              <>
+                <span className="hidden sm:block text-xs font-semibold text-muted-foreground">
+                  Hi, {currentUser.email.split('@')[0]}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-full border border-border px-4 py-2 text-xs font-bold text-foreground hover:bg-secondary transition-all"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => navTo('login')}
+                className="rounded-full border border-border px-4 py-2 text-xs font-bold text-foreground hover:bg-secondary transition-all"
+              >
+                Sign In
+              </button>
+            )}
+
+            <button
+              onClick={() => navTo('submit')}
+              className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-all flex items-center gap-1.5"
+            >
+              Start Checking <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -123,6 +178,20 @@ export default function App() {
 
         {view === 'result' && result && (
           <ResultPage result={result} listing={listing} onReset={handleReset} />
+        )}
+
+        {view === 'login' && (
+          <LoginPage
+            onLoginSuccess={handleAuthSuccess}
+            onNavigateToSignup={() => navTo('signup')}
+          />
+        )}
+
+        {view === 'signup' && (
+          <SignupPage
+            onSignupSuccess={handleAuthSuccess}
+            onNavigateToLogin={() => navTo('login')}
+          />
         )}
 
         {view === 'how' && (

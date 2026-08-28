@@ -1,4 +1,5 @@
 import os
+from routes.auth import auth_bp
 from flask import Flask
 from flask_cors import CORS
 from config import Config
@@ -40,7 +41,9 @@ def create_app():
 
     return app
 
+
 app = create_app()
+app.register_blueprint(auth_bp, url_prefix='/api')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=Config.PORT, debug=True)

@@ -50,11 +50,15 @@ export async function submitListing(listingData) {
   }
 
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}/submit`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         title: listingData.title || '',
         description: listingData.description || '',
@@ -130,4 +134,29 @@ export async function fetchCategories() {
     console.warn('Backend server offline. Using default categories list fallback.');
     return await mockFetchCategories();
   }
+}
+export async function signup(email, password) {
+  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Signup failed');
+  }
+  return data;
+}
+
+export async function login(email, password) {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Login failed');
+  }
+  return data;
 }
