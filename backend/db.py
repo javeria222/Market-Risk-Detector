@@ -18,7 +18,7 @@ users_collection = None
 
 if uri:
     try:
-        client = MongoClient(uri, server_api=ServerApi('1'), serverSelectionTimeoutMS=2000)
+        client = MongoClient(uri, server_api=ServerApi('1'), serverSelectionTimeoutMS=10000, connectTimeoutMS=10000)
         db = client["market_risk_detector"]
         listings_collection = db["listings"]
         feedback_collection = db["feedback"]
@@ -26,7 +26,7 @@ if uri:
         users_collection.create_index("email", unique=True)
     except Exception as e:
         logger.warning(f"MongoDB connection failed to initialize: {e}")
-        db = None
+        client = db = listings_collection = feedback_collection = users_collection = None
 
 
 def create_user(email: str, password_hash: str):
